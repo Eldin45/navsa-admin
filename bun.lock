@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "relivator",
+      "name": "NAVSA",
       "dependencies": {
         "@paralleldrive/cuid2": "^2.2.2",
         "@polar-sh/better-auth": "^0.1.1",
