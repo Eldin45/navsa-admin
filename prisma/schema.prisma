@@ -1,0 +1,229 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int   @id @default(autoincrement())
+  name          String
+  email         String     @unique
+  password      String
+  phone         String     @unique
+  subs_stat    Int @default(1)
+  pkey         String
+  rf_link     String
+  referal     String?
+  bussiness      Bussiness[]
+  subscription Subscription[]
+  subsHistory subscriptionHistory[]
+  products     Product[]
+   orders       Order[]
+  qrCodes      QrCode[]
+  customers     Customer[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+}
+
+
+
+model Bussiness {
+  id          Int       @id @default(autoincrement())
+  bussines_name        String @unique
+  link_name        String @unique @default("NULL")
+  bussinesId String @unique
+  address    String?
+  aboutBusiness    String?
+  type     String
+  whatsapp  String
+  link      String 
+  mplink      String 
+  logo      String?
+  logo_public_id String?
+  isActive    Boolean   @default(true)
+  // Relationships
+  user      User      @relation(fields: [userId], references: [phone])
+  userId    String
+
+  customer  Customer[]
+  pro_category  product_category[]
+  products    Product[]
+  order          Order[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  uniqueId    String   @unique @default(uuid())  // Auto-generated UUID
+  name        String
+  description String?
+  category    String
+  price       Float
+  images      Json   // Consider String[] if storing multiple image URLs
+  imgPublicId Json
+  salePrice   Float
+  variants      Json?
+  colorVariants   Json?
+  stock       Int       @default(0)
+  isActive    Boolean   @default(true)
+  
+  // Relationships
+  user      User      @relation(fields: [userId], references: [phone])
+  userId    String
+  bussines  Bussiness @relation(fields: [bussinesId], references: [bussinesId])
+  bussinesId     String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime   @updatedAt  // Fixed typo from 'updateddAt'
+
+  @@index([uniqueId])  // Optional: Add index for better query performance
+}
+
+model Customer {
+  id          Int       @id @default(autoincrement())
+  name        String
+  email       String?
+  phone       String @unique 
+  // Relationships
+  bussines   Bussiness  @relation(fields: [bussinesId], references: [bussinesId])
+  bussinesId String
+
+  user      User      @relation(fields: [userId], references: [phone])
+  userId    String
+  orders    Order[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Order {
+  id          Int       @id @default(autoincrement())
+  total       Float
+  orderNumber String  
+  orderItems   Json     // Array of order items stored as JSON
+  subtotal     Float
+  // Relationships
+  customer    Customer @relation(fields: [customerId], references: [id])
+  customerId  Int
+
+  bussines   Bussiness  @relation(fields: [bussinesId], references: [bussinesId])
+  bussinesId String
+
+  user      User      @relation(fields: [userId], references: [phone])
+  userId    String
+
+  status      String    @default("COMPLETED") // e.g., PENDING, COMPLETED, CANCELLED
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model QrCode {
+  id          Int         @id @default(autoincrement())
+  type        QrCodeType  // "BUSINESS" or "CATALOG"
+  url         String      // e.g., "https://yourapp.com/user123/business" 
+  imageUrl    String      // "/qr/user123-business.png"
+  
+  // Relationships
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+// This is your plans model, which defines the static subscription products
+model Plans {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  price       Float
+  duration    Int       @default(30) // Duration in days
+  description String
+
+  // This back-relation links to the subscriptions table
+  subscriptions Subscription[]
+  subsHistory subscriptionHistory[]
+  isActive Boolean
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+// A more robust status enum to prevent typos
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+  TRIAL
+}
+
+
+
+// This model tracks a single instance of a user subscribing to a plan
+model Subscription {
+  id          Int       @id @default(autoincrement())
+
+  // The relation to the Plans model
+  plan        Plans  @relation(fields: [planId], references: [id])
+  planId      Int
+
+  // The relation to the User model, now without the unique constraint
+  user        User      @relation(fields: [userId], references: [phone])
+  userId      String @unique
+  planType    String
+  // The status of this specific subscription instance
+  status      SubscriptionStatus  @default(TRIAL)
+  // The start and end date for this specific subscription
+  startDate   DateTime @default(now())
+  expiresAt   DateTime
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+
+
+
+
+model subscriptionHistory {
+  id          Int       @id @default(autoincrement())
+
+  // The relation to the Plans model
+  plan        Plans  @relation(fields: [planId], references: [id])
+  planId      Int
+
+  // The relation to the User model, now without the unique constraint
+  user        User      @relation(fields: [userId], references: [phone])
+  userId      String 
+  planType    String
+  changeReason String
+
+  // The status of this specific subscription instance
+  status      SubscriptionStatus  @default(TRIAL)
+
+  startDate   DateTime @default(now())
+  expiresAt   DateTime
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+
+model product_category {
+  id          Int       @id @default(autoincrement())
+  name        String
+  // Relationships
+  business      Bussiness      @relation(fields: [businessId], references: [ bussinesId])
+  businessId    String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+
+
+enum QrCodeType {
+  BUSINESS
+  CATALOG
+}
