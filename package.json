@@ -12,7 +12,7 @@
     "ui": "bunx --bun shadcn@latest add",
     "latest": "bun update --latest && bun check",
     "check": "tsc --noEmit && eslint --cache --fix . && biome check --fix --unsafe . && knip",
-    "tests": "bun test ./.tests",
+    "tests": "bun test ./.tests"
   
   },
   "dependencies": {
